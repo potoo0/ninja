@@ -5,6 +5,11 @@ on:
     tags: ["v*"]
   pull_request:
   workflow_dispatch:
+    inputs:
+      target:
+        description: 'spec target for build, separate by comma if multiple'
+        required: false
+        default: 'linux'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
@@ -12,14 +17,14 @@ concurrency:
 
 jobs:
   linux:
+    if: contains(github.event.inputs.target, 'linux')
     name: Linux
     runs-on: ubuntu-latest
     environment: Linux
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
-          repository: 'gngpp/ninjaer'
-          token: ${{ secrets.CR_PAT }}
+          repository: 'potoo0/ninja'
 
       - name: Install depends
         run: |
@@ -39,12 +44,12 @@ jobs:
             echo "tag=latest" >> $GITHUB_OUTPUT
             echo "tag=latest" >> $GITHUB_ENV
           fi
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: gngpp
-          password: ${{ secrets.CR_PAT }}
+      # - name: Login to GitHub Container Registry
+      #   uses: docker/login-action@v2
+      #   with:
+      #     registry: ghcr.io
+      #     username: gngpp
+      #     password: ${{ secrets.CR_PAT }}
 
       - name: Build package
         shell: bash
@@ -63,6 +68,7 @@ jobs:
           generate_release_notes: true
 
   windows:
+    if: contains(github.event.inputs.target, 'windows')
     name: Windows
     runs-on: ubuntu-latest
     environment: Windows
@@ -114,6 +120,7 @@ jobs:
           generate_release_notes: true
 
   macos:
+    if: contains(github.event.inputs.target, 'macos')
     runs-on: macos-latest
     name: MacOS
     environment: MacOS
@@ -161,6 +168,7 @@ jobs:
           generate_release_notes: true
 
   docker:
+    if: contains(github.event.inputs.target, 'docker')
     name: Build Docker Image
     runs-on: ubuntu-latest
     needs: [ linux ]
